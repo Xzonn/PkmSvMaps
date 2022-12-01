@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": false,
+    "lib": ["DOM", "ES2022"],
+    "moduleResolution": "node",
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2022"
+  },
+  "include": [
+    "src/ts/map.ts",
+    "node_modules/types-mediawiki"
+  ]
+}
