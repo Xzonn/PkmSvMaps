@@ -1,4 +1,4 @@
-import L from 'leaflet';
+import L from "leaflet";
 
 type IconName = {
   [x: string]: string;
@@ -119,7 +119,9 @@ function convert_coord(x: number, y: number): [number, number] {
   return [-crs_y, crs_x];
 }
 
-let tiles_root = document.currentScript?.getAttribute("src")?.replace(/\/[^\/]+\/[^\/]+$/, "/tiles");
+let script_root = document.currentScript
+  ?.getAttribute("src")
+  ?.replace(/\/[^\/]+\/[^\/]+$/, "");
 
 $(function () {
   function load_data(
@@ -128,7 +130,8 @@ $(function () {
     map: L.Map | Object,
     callback: Function
   ) {
-    let data = JSON.parse(localStorage.getItem(`sv-${name}-data`) || "") || {};
+    let data =
+      JSON.parse(localStorage.getItem(`sv-${name}-data`) || "{}") || {};
     layers[name] = L.featureGroup();
 
     if (!$.isEmptyObject(data)) {
@@ -140,9 +143,7 @@ $(function () {
       }
     }
     if ($.isEmptyObject(data)) {
-      $.get(`../json/${name}_data.json`).done(function (
-        data
-      ) {
+      $.get(`${script_root}/json/${name}_data.json`).done(function (data) {
         localStorage.setItem(`sv-${name}-data`, JSON.stringify(data));
         callback(data, layers, map);
       });
@@ -248,16 +249,6 @@ $(function () {
     map: L.Map,
     content: JQuery<HTMLElement>
   ) {
-    layers["area"] = L.featureGroup();
-    layers["pokemon"] = L.featureGroup();
-
-    $(`<li><a href="#sv-map-area-off">✔️当前区域</a></li>`).appendTo(
-      $(".sv-map-layer ul")
-    );
-    $(`<li><a href="#sv-map-pokemon-off">✔️宝可梦</a></li>`).appendTo(
-      $(".sv-map-layer ul")
-    );
-
     let page_title = mw.config.get("wgTitle");
     show_boundary(boundary_data, layers, map, page_title, "area");
 
@@ -294,15 +285,15 @@ $(function () {
         let form = $(this).data("form");
         (layers["pokemon"] as L.FeatureGroup).clearLayers();
         if ($(this).hasClass("sv-fixed-selected")) {
-          $(".sv-fixed-selected").removeClass("sv-fixed-selected");
+          content.find(".sv-fixed-selected").removeClass("sv-fixed-selected");
           for (let form in pokemon_layers) {
             pokemon_layers[form].addTo(layers["pokemon"]);
           }
         } else {
-          $(".sv-fixed-selected").removeClass("sv-fixed-selected");
+          content.find(".sv-fixed-selected").removeClass("sv-fixed-selected");
           pokemon_layers[form].addTo(layers["pokemon"]);
           map.fitBounds(pokemon_layers[form].getBounds());
-          $(`tr[data-form="${form}"]`).addClass("sv-fixed-selected");
+          content.find(`tr[data-form="${form}"]`).addClass("sv-fixed-selected");
         }
       });
     window.pokemon_layers = pokemon_layers;
@@ -329,7 +320,7 @@ $(function () {
         ) {
           return "data:image/gif;base64,R0lGODlhAQABAJEAAP///wAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
         } else {
-          return `${tiles_root}/${data.z}/${data.x},${data.y}.webp`;
+          return `${script_root}/tiles/${data.z}/${data.x},${data.y}.webp`;
         }
       },
       attribution: "朱·紫数据库 | sv.xzonn.top",
@@ -346,12 +337,20 @@ $(function () {
       mw.config.get("wgCategories").includes("区域") ||
       content.find("tr[data-points]").length
     ) {
+      layers["area"] = L.featureGroup();
+      layers["pokemon"] = L.featureGroup();
+
+      content
+        .find(".sv-map-layer ul")
+        .append([
+          $(`<li><a href="#sv-map-area-off">✔️当前区域</a></li>`),
+          $(`<li><a href="#sv-map-pokemon-off">✔️宝可梦</a></li>`),
+        ]);
       load_data("boundary", {}, {}, (boundary_data: BoundaryData) => {
         show_current_area(boundary_data, layers, map, content);
       });
     }
 
-    let options = content.find(".sv-map-layer a");
     function hash_handle(hash: string, reverse: boolean = false) {
       let hash_splited = hash.split("-");
       if (hash_splited[0] !== "#sv" || hash_splited[1] !== "map") {
@@ -364,7 +363,7 @@ $(function () {
       let action_is_on = reverse
         ? hash_splited[3] == "off"
         : hash_splited[3] == "on";
-      let link = $(`.sv-map-layer a[href*="${hash_splited[2]}"]`);
+      let link = content.find(`.sv-map-layer a[href*="${hash_splited[2]}"]`);
       if (link) {
         if (action_is_on) {
           layer.addTo(map);
@@ -387,7 +386,10 @@ $(function () {
         }
       }
     }
-    function hash_handle_element(element: HTMLElement, reverse: boolean = false) {
+    function hash_handle_element(
+      element: HTMLElement,
+      reverse: boolean = false
+    ) {
       let hash = "#" + ($(element).attr("href") || "").split("#")[1];
       hash_handle(hash, reverse);
     }
@@ -398,14 +400,15 @@ $(function () {
         event.preventDefault();
       }
     }
-    options
-      .each(function () {
-        hash_handle_element(this, true);
-      })
-      .on("click", function (event) {
-        hash_handle_element(this);
+    content.find(".sv-map-layer a").each(function () {
+      hash_handle_element(this, true);
+    });
+    content.find(".sv-map-layer").on("click", function (event) {
+      if ($(event.target).is("a")) {
+        hash_handle_element(event.target);
         event.preventDefault();
-      });
+      }
+    });
     $(window).on("hashchange", hash_handle_event);
     hash_handle_event(null);
     content.find(".sv-map-pending").removeClass("sv-map-pending");

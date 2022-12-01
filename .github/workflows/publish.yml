@@ -6,6 +6,7 @@ env:
   NODE_VERSION: 18
 jobs:
   setup:
+    if: github.repository_owner == 'Xzonn' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-20.04
     steps:
       - name: Check out repository
