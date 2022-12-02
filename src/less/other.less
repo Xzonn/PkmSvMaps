@@ -1,0 +1,53 @@
+/* 互动地图 */
+.sv-map-box {
+	position: relative;
+	display: block;
+}
+
+.sv-map-pending li {
+	display: none;
+}
+
+.sv-map-pending ul::before {
+	content: '载入中……';
+}
+
+.sv-map-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 800;
+	display: block;
+	width: 100%;
+	font-size: 14px;
+}
+
+.sv-map-layer ul {
+	display: flex;
+	margin: 0 auto;
+	padding: 5px 15px;
+	width: fit-content;
+	background-color: rgba(255, 255, 255, 0.6);
+	list-style: none;
+	gap: 15px;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.sv-map-layer a[href$="-off"] {
+	color: #126e00;
+}
+
+.sv-map-layer a[href$="-on"] {
+	color: #e60012;
+}
+
+.sv-map {
+	width: 812.5px;
+	height: 812.5px;
+	max-width: 100%;
+}
+
+.wikitable tr.sv-fixed-selected, .wikitable tr.sv-fixed-selected:hover {
+	background-color: #ffe7ec;
+}

@@ -1,8 +1,8 @@
 {
   "name": "pkm-sv-maps",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A repo for Paldea maps.",
-  "main": "dist/map.js",
+  "main": "assets/js/map.js",
   "scripts": {
     "build": "npx esbuild src/ts/map.ts --bundle --outfile=assets/js/map.js --target=es2022 --minify --keep-names --charset=utf8",
     "build-css": "npx lessc src/less/map.less assets/css/map.css -x"
