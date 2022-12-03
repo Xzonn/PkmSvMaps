@@ -193,29 +193,24 @@ $(function () {
   }
 
   function show_stake(stake_data: StakeData, layers: Layers) {
-    ["wochien", "chienpao", "tinglu", "chiyu", "chest"].forEach(function (
-      value
-    ) {
+    ["wochien", "chienpao", "tinglu", "chiyu"].forEach(function (value) {
       let form: string = ICON_NAME[value];
       let icon = L.divIcon({
         className: `p p-${form}`,
         iconSize: [64, 64],
       });
-      stake_data[value][value == "chest" ? "gimmighoul" : value].forEach(
-        function (coord: { x: number; y: number }) {
-          let crs_coord = convert_coord(coord.x, coord.y);
-          let marker = L.marker(crs_coord, {
-            icon: icon,
-          }).addTo(layers[value == "chest" ? "gimmighoul" : "stake"]);
-          marker.bindPopup(
-            `<a href="/wiki/形态:${form}">${
-              value == "chest"
-                ? "索财灵-宝箱形态"
-                : form.split("-")[0] + "的桩子"
-            }</a>`
-          );
-        }
-      );
+      stake_data[value][value].forEach(function (coord: {
+        x: number;
+        y: number;
+      }) {
+        let crs_coord = convert_coord(coord.x, coord.y);
+        let marker = L.marker(crs_coord, {
+          icon: icon,
+        }).addTo(layers["stake"]);
+        marker.bindPopup(
+          `<a href="/wiki/形态:${form}">${form.split("-")[0]}的桩子</a>`
+        );
+      });
     });
     ["gym", "titan", "star"].forEach(function (value) {
       let road = ROAD_NAME[value];
@@ -257,12 +252,15 @@ $(function () {
       .find("tr[data-points]")
       .each(function () {
         let tr = $(this);
-        let points = `${tr.data("points")}`
-          .split("/")
-          .map((x) => x.split(",").map((y) => +y))
-          .map((y) => convert_coord(y[0], y[1]));
+        let points = tr.data("points")
+          ? `${tr.data("points")}`
+              .split("/")
+              .map((x) => x.split(",").map((y) => +y))
+              .map((y) => convert_coord(y[0], y[1]))
+          : [];
         let form = tr.data("form");
-        let level = tr.data("level");
+        let level = +tr.data("level");
+        let note = tr.find("td:last-child").text();
         let icon = L.divIcon({
           className: `p p-${form}`,
           iconSize: [64, 64],
@@ -276,7 +274,9 @@ $(function () {
             icon: icon,
           }).addTo(layer);
           marker.bindPopup(
-            `<a href="#sv-fixed-${form}">${form.split("-")[0]}</a> Lv. ${level}`
+            `<a href="#sv-fixed-${form}">${form.split("-")[0]}</a>${
+              isNaN(level) || level == 0 ? "" : ` Lv. ${level}`
+            }${note ? `<br>（${note}）` : ""}`
           );
         });
         tr.find("i.p").wrap(`<a href="#sv-map"></a>`);
@@ -337,13 +337,16 @@ $(function () {
       mw.config.get("wgCategories").includes("区域") ||
       content.find("tr[data-points]").length
     ) {
-      layers["area"] = L.featureGroup();
+      mw.config.get("wgCategories").includes("区域") ||
+        (layers["area"] = L.featureGroup());
       layers["pokemon"] = L.featureGroup();
 
       content
         .find(".sv-map-layer ul")
         .append([
-          $(`<li><a href="#sv-map-area-off">✔️当前区域</a></li>`),
+          (mw.config.get("wgCategories").includes("区域")
+            ? $(`<li><a href="#sv-map-area-off">✔️当前区域</a></li>`)
+            : "") as JQuery<Element>,
           $(`<li><a href="#sv-map-pokemon-off">✔️宝可梦</a></li>`),
         ]);
       load_data("boundary", {}, {}, (boundary_data: BoundaryData) => {
