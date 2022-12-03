@@ -337,7 +337,7 @@ $(function () {
       mw.config.get("wgCategories").includes("区域") ||
       content.find("tr[data-points]").length
     ) {
-      mw.config.get("wgCategories").includes("区域") ||
+      mw.config.get("wgCategories").includes("区域") &&
         (layers["area"] = L.featureGroup());
       layers["pokemon"] = L.featureGroup();
 
