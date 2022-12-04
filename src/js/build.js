@@ -21,7 +21,7 @@ fs.readFile("src/less/map.less", function (error, data) {
       paths: ["src/less/"],
       rootpath: "../../src/less/",
       sourceMap: {
-        sourceMapRootpath: "../../"
+        sourceMapRootpath: "../../",
       },
     })
     .then(
@@ -41,8 +41,19 @@ fs.readFile("src/less/map.less", function (error, data) {
         })
           .minify(output.css, output.map)
           .then(function (output) {
-            fs.writeFile("assets/css/map.css", output.styles, () => "");
-            fs.writeFile("assets/css/map.css.map", output.sourceMap.toString(), () => "");
+            fs.writeFile(
+              "assets/css/map.css",
+              output.styles.replace(
+                /\.\.\/\.\.\/src\/less\/(?:images\/)?/g,
+                "../../assets/images/"
+              ),
+              () => ""
+            );
+            fs.writeFile(
+              "assets/css/map.css.map",
+              output.sourceMap.toString(),
+              () => ""
+            );
           })
           .catch(function (error) {
             return console.error(error);
@@ -52,4 +63,20 @@ fs.readFile("src/less/map.less", function (error, data) {
         return console.error(error);
       }
     );
+});
+[
+  "node_modules/leaflet/dist/images/",
+  "node_modules/leaflet-fullscreen/dist/",
+].forEach(function (dir) {
+  fs.readdir(dir, function (error, files) {
+    if (error) {
+      return console.error(error);
+    }
+
+    files.forEach(function (file) {
+      if (file.endsWith(".png")) {
+        fs.copyFile(`${dir}${file}`, `assets/images/${file}`, () => "");
+      }
+    });
+  });
 });

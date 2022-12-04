@@ -1,4 +1,5 @@
 import L from "leaflet";
+import "leaflet-fullscreen";
 
 type IconName = {
   [x: string]: string;
@@ -260,7 +261,7 @@ $(function () {
           : [];
         let form = tr.data("form");
         let level = +tr.data("level");
-        let note = tr.find("td:last-child").text();
+        let note = tr.find("td:last-child").text().trim();
         let icon = L.divIcon({
           className: `p p-${form}`,
           iconSize: [64, 64],
@@ -309,6 +310,7 @@ $(function () {
         L.latLng(-ZOOMED_HEIGHT, ZOOMED_WIDTH)
       ),
       maxBoundsViscosity: 0.5,
+      fullscreenControl: true,
     }).setView(L.latLng(0, 0), 0);
     let layers: Layers = {};
 
