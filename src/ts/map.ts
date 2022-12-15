@@ -260,7 +260,7 @@ $(function () {
               .map((y) => convert_coord(y[0], y[1]))
           : [];
         let form = tr.data("form");
-        let level = +tr.data("level");
+        let level = tr.data("level");
         let note = tr.find("td:last-child").text().trim();
         let icon = L.divIcon({
           className: `p p-${form}`,
@@ -276,7 +276,7 @@ $(function () {
           }).addTo(layer);
           marker.bindPopup(
             `<a href="#sv-fixed-${form}">${form.split("-")[0]}</a>${
-              isNaN(level) || level == 0 ? "" : ` Lv. ${level}`
+              level == "0" || level == "-" ? "" : ` Lv. ${level}`
             }${note ? `<br>（${note}）` : ""}`
           );
         });
