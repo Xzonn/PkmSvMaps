@@ -1,6 +1,6 @@
 {
   "name": "pkm-sv-maps",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "A repo for Paldea maps.",
   "main": "assets/js/map.js",
   "scripts": {
