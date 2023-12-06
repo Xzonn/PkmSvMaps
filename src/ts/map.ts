@@ -1,6 +1,11 @@
 import L from "leaflet";
 import "leaflet-fullscreen";
 
+type AreaId = "paldea" | "kitakami";
+type AreaData = {
+  [x in AreaId]: number;
+};
+
 type IconName = {
   [x: string]: string;
 };
@@ -47,13 +52,24 @@ declare global {
   }
 }
 
-const IMAGE_WIDTH = 13000,
-  IMAGE_HEIGHT = 13000;
+const IMAGE_WIDTHS: AreaData = {
+  paldea: 13000,
+  kitakami: 6800,
+};
+const IMAGE_HEIGHTS: AreaData = {
+  paldea: 13000,
+  kitakami: 6800,
+};
+const GAME_WIDTHS: AreaData = {
+  paldea: 5000,
+  kitakami: 2000,
+};
+const GAME_HEIGHTS: AreaData = {
+  paldea: 5000,
+  kitakami: 2000,
+};
+
 const MAX_ZOOM = 3;
-const ZOOMED_WIDTH = IMAGE_WIDTH / 16,
-  ZOOMED_HEIGHT = IMAGE_HEIGHT / 16;
-const GAME_WIDTH = 5000,
-  GAME_HEIGHT = 5000;
 const TILE_SIZE = 250;
 const ICON_NAME: IconName = {
   wochien: "古简蜗-0",
@@ -114,6 +130,10 @@ String.prototype.hashCode = function () {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
+let ZOOMED_WIDTH = 0,
+  ZOOMED_HEIGHT = 0;
+let GAME_WIDTH = 0,
+  GAME_HEIGHT = 0;
 function convert_coord(x: number, y: number): [number, number] {
   let crs_x = x * (ZOOMED_WIDTH / GAME_WIDTH);
   let crs_y = y * (ZOOMED_HEIGHT / GAME_HEIGHT);
@@ -129,10 +149,13 @@ $(function () {
     name: string,
     layers: Layers,
     map: L.Map | Object,
-    callback: Function
+    callback: Function,
+    data_name: string | undefined = undefined
   ) {
     let data =
-      JSON.parse(localStorage.getItem(`sv-${name}-data`) || "{}") || {};
+      JSON.parse(
+        localStorage.getItem(`sv-${data_name || name}-data`) || "{}"
+      ) || {};
     layers[name] = L.featureGroup();
 
     if (!$.isEmptyObject(data)) {
@@ -144,10 +167,15 @@ $(function () {
       }
     }
     if ($.isEmptyObject(data)) {
-      $.get(`${script_root}/json/${name}_data.json`).done(function (data) {
-        localStorage.setItem(`sv-${name}-data`, JSON.stringify(data));
-        callback(data, layers, map);
-      });
+      $.get(`${script_root}/json/${data_name || name}_data.json`).done(
+        function (data) {
+          localStorage.setItem(
+            `sv-${data_name || name}-data`,
+            JSON.stringify(data)
+          );
+          callback(data, layers, map);
+        }
+      );
     }
   }
 
@@ -301,6 +329,13 @@ $(function () {
   }
 
   mw.hook("wikipage.content").add(function (content: JQuery<HTMLElement>) {
+    let map_id = ($(".sv-map").data("map") || "paldea") as AreaId;
+    const postfix = map_id == "paldea" ? "" : "_k";
+    const IMAGE_WIDTH = IMAGE_WIDTHS[map_id],
+      IMAGE_HEIGHT = IMAGE_HEIGHTS[map_id];
+    (ZOOMED_WIDTH = IMAGE_WIDTH / 16), (ZOOMED_HEIGHT = IMAGE_HEIGHT / 16);
+    (GAME_WIDTH = GAME_WIDTHS[map_id]), (GAME_HEIGHT = GAME_HEIGHTS[map_id]);
+
     let map = L.map("sv-map", {
       minZoom: 0,
       maxZoom: MAX_ZOOM,
@@ -318,23 +353,24 @@ $(function () {
       path: function (data: { x: number; y: number; z: number }) {
         if (
           Math.min(data.x, data.y) < 0 ||
-          Math.max(data.x, data.y) * (4 / (1 << data.z)) >= 13
+          Math.max(data.x, data.y) * (4 / (1 << data.z)) >=
+            Math.ceil(IMAGE_WIDTH / TILE_SIZE / 4)
         ) {
           return "data:image/gif;base64,R0lGODlhAQABAJEAAP///wAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
         } else {
-          return `${script_root}/tiles/${data.z}/${data.x},${data.y}.webp`;
+          return `${script_root}/tiles${postfix}/${data.z}/${data.x},${data.y}.webp`;
         }
       },
       attribution: "朱·紫数据库 | sv.xzonn.top",
       tileSize: TILE_SIZE,
     } as L.TileLayerOptions).addTo(map);
 
-    load_data("boundary", layers, map, show_boundary);
-
-    layers["gimmighoul"] = L.featureGroup();
-    layers["roads"] = L.featureGroup();
-    load_data("stake", layers, map, show_stake);
-
+    load_data("boundary", layers, map, show_boundary, `boundary${postfix}`);
+    if (map_id == "paldea") {
+      layers["gimmighoul"] = L.featureGroup();
+      layers["roads"] = L.featureGroup();
+      load_data("stake", layers, map, show_stake);
+    }
     if (
       mw.config.get("wgCategories").includes("区域") ||
       content.find("tr[data-points]").length
@@ -351,9 +387,15 @@ $(function () {
             : "") as JQuery<Element>,
           $(`<li><a href="#sv-map-pokemon-off">✔️宝可梦</a></li>`),
         ]);
-      load_data("boundary", {}, {}, (boundary_data: BoundaryData) => {
-        show_current_area(boundary_data, layers, map, content);
-      });
+      load_data(
+        "boundary",
+        {},
+        {},
+        (boundary_data: BoundaryData) => {
+          show_current_area(boundary_data, layers, map, content);
+        },
+        `boundary${postfix}`
+      );
     }
 
     function hash_handle(hash: string, reverse: boolean = false) {
