@@ -1,7 +1,7 @@
 import L from "leaflet";
 import "leaflet-fullscreen";
 
-type AreaId = "paldea" | "kitakami";
+type AreaId = "paldea" | "kitakami" | "blueberry";
 type AreaData = {
   [x in AreaId]: number;
 };
@@ -55,18 +55,22 @@ declare global {
 const IMAGE_WIDTHS: AreaData = {
   paldea: 13000,
   kitakami: 6800,
+  blueberry: 6800,
 };
 const IMAGE_HEIGHTS: AreaData = {
   paldea: 13000,
   kitakami: 6800,
+  blueberry: 6800,
 };
 const GAME_WIDTHS: AreaData = {
   paldea: 5000,
   kitakami: 2000,
+  blueberry: 2000,
 };
 const GAME_HEIGHTS: AreaData = {
   paldea: 5000,
   kitakami: 2000,
+  blueberry: 2000,
 };
 
 const MAX_ZOOM = 3;
@@ -330,7 +334,7 @@ $(function () {
 
   mw.hook("wikipage.content").add(function (content: JQuery<HTMLElement>) {
     let map_id = ($(".sv-map").data("map") || "paldea") as AreaId;
-    const postfix = map_id == "paldea" ? "" : "_k";
+    const postfix = (map_id == "paldea") ? "" : ((map_id == "kitakami") ? "_k" : "_b");
     const IMAGE_WIDTH = IMAGE_WIDTHS[map_id],
       IMAGE_HEIGHT = IMAGE_HEIGHTS[map_id];
     (ZOOMED_WIDTH = IMAGE_WIDTH / 16), (ZOOMED_HEIGHT = IMAGE_HEIGHT / 16);
