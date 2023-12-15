@@ -36,6 +36,16 @@ type StakeData = {
   };
 };
 
+type Pokemon = {
+  name: string;
+  x: number;
+  y: number;
+};
+
+type PokemonData = {
+  [x: string]: [Pokemon];
+};
+
 type Layers = {
   [x: string]: L.FeatureGroup;
 };
@@ -271,6 +281,23 @@ $(function () {
     });
   }
 
+  function show_legendary(legendary_data: PokemonData, layers: Layers) {
+    legendary_data["legendary"].forEach((pokemon) => {
+      let name = pokemon.name;
+      let icon = L.divIcon({
+        className: `p p-${name}`,
+        iconSize: [64, 64],
+      });
+      let crs_coord = convert_coord(pokemon.x, pokemon.y);
+      let marker = L.marker(crs_coord, {
+        icon: icon,
+      }).addTo(layers["legendary"]);
+      marker.bindPopup(
+        `<a href="/wiki/形态:${name}">${name.split("-")[0]}</a>`
+      );
+    });
+  }
+
   function show_current_area(
     boundary_data: BoundaryData,
     layers: Layers,
@@ -334,7 +361,8 @@ $(function () {
 
   mw.hook("wikipage.content").add(function (content: JQuery<HTMLElement>) {
     let map_id = ($(".sv-map").data("map") || "paldea") as AreaId;
-    const postfix = (map_id == "paldea") ? "" : ((map_id == "kitakami") ? "_k" : "_b");
+    const postfix =
+      map_id == "paldea" ? "" : map_id == "kitakami" ? "_k" : "_b";
     const IMAGE_WIDTH = IMAGE_WIDTHS[map_id],
       IMAGE_HEIGHT = IMAGE_HEIGHTS[map_id];
     (ZOOMED_WIDTH = IMAGE_WIDTH / 16), (ZOOMED_HEIGHT = IMAGE_HEIGHT / 16);
@@ -350,7 +378,7 @@ $(function () {
       ),
       maxBoundsViscosity: 0.5,
       fullscreenControl: true,
-    }).setView(L.latLng(0, 0), 0);
+    }).setView(L.latLng(0, 0), +(map_id != "paldea"));
     let layers: Layers = {};
 
     L.tileLayer("{path}", {
@@ -374,6 +402,8 @@ $(function () {
       layers["gimmighoul"] = L.featureGroup();
       layers["roads"] = L.featureGroup();
       load_data("stake", layers, map, show_stake);
+      layers["legendary"] = L.featureGroup();
+      load_data("legendary", layers, map, show_legendary);
     }
     if (
       mw.config.get("wgCategories").includes("区域") ||
