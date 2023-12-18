@@ -170,6 +170,12 @@ $(function () {
       JSON.parse(
         localStorage.getItem(`sv-${data_name || name}-data`) || "{}"
       ) || {};
+    let time = parseInt(
+      localStorage.getItem(`sv-${data_name || name}-data-time`) || "0"
+    );
+    if (isNaN(time) || +new Date() - time > 86400 * 1000) {
+      data = {};
+    }
     layers[name] = L.featureGroup();
 
     if (!$.isEmptyObject(data)) {
@@ -186,6 +192,10 @@ $(function () {
           localStorage.setItem(
             `sv-${data_name || name}-data`,
             JSON.stringify(data)
+          );
+          localStorage.setItem(
+            `sv-${data_name || name}-data-time`,
+            "" + +new Date()
           );
           callback(data, layers, map);
         }
@@ -298,6 +308,21 @@ $(function () {
     });
   }
 
+  function show_ogre(ogre_data: PokemonData, layers: Layers) {
+    ogre_data["ogre"].forEach((pokemon) => {
+      let name = pokemon.name;
+      let icon = L.divIcon({
+        className: `icon-trainer icon-鬼面组`,
+        iconSize: [24, 24],
+      });
+      let crs_coord = convert_coord(pokemon.x, pokemon.y);
+      let marker = L.marker(crs_coord, {
+        icon: icon,
+      }).addTo(layers["ogre"]);
+      marker.bindPopup(`<a href="/wiki/北上鬼面组">${name}</a>`);
+    });
+  }
+
   function show_current_area(
     boundary_data: BoundaryData,
     layers: Layers,
@@ -404,6 +429,12 @@ $(function () {
       load_data("stake", layers, map, show_stake);
       layers["legendary"] = L.featureGroup();
       load_data("legendary", layers, map, show_legendary);
+    } else if (map_id == "kitakami") {
+      layers["ogre"] = L.featureGroup();
+      load_data("legendary_k", layers, map, show_ogre);
+    } else if (map_id == "blueberry") {
+      layers["legendary"] = L.featureGroup();
+      load_data("legendary_b", layers, map, show_legendary);
     }
     if (
       mw.config.get("wgCategories").includes("区域") ||
