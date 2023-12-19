@@ -42,8 +42,10 @@ type Pokemon = {
   y: number;
 };
 
-type PokemonData = {
-  [x: string]: [Pokemon];
+type Trainer = Pokemon;
+
+type PointsData = {
+  [x: string]: [Pokemon | Trainer];
 };
 
 type Layers = {
@@ -99,7 +101,7 @@ const ROAD_NAME: RoadName = {
     electric: "奇树",
     ghost: "莱姆",
     grass: "寇沙",
-    hof: "八朔",
+    hof: "也慈",
     ice: "古鲁夏",
     normal: "青木",
     psychic: "莉普",
@@ -283,16 +285,29 @@ $(function () {
           }).addTo(layers["roads"]);
           marker.bindPopup(
             `<a href="/wiki/${road[""]}#${
-              chara == "八朔" ? "四天王" : chara
-            }">${chara == "八朔" ? "四天王、冠军" : chara}</a>`
+              chara == "也慈" ? "四天王" : chara
+            }">${chara == "也慈" ? "四天王、冠军" : chara}</a>`
           );
         });
       }
     });
   }
 
-  function show_legendary(legendary_data: PokemonData, layers: Layers) {
-    legendary_data["legendary"].forEach((pokemon) => {
+  function show_paldea(paldea_data: PointsData, layers: Layers) {
+    show_legendary(paldea_data["legendary"], layers);
+  }
+
+  function show_kitakami(kitakami_data: PointsData, layers: Layers) {
+    show_ogre(kitakami_data["ogre"], layers);
+  }
+
+  function show_blueberry(blueberry_data: PointsData, layers: Layers) {
+    show_legendary(blueberry_data["legendary"], layers);
+    show_trainer(blueberry_data["trainer"], layers, "蓝莓学园");
+  }
+
+  function show_legendary(legendary_data: [Pokemon], layers: Layers) {
+    legendary_data.forEach((pokemon) => {
       let name = pokemon.name;
       let icon = L.divIcon({
         className: `p p-${name}`,
@@ -308,18 +323,39 @@ $(function () {
     });
   }
 
-  function show_ogre(ogre_data: PokemonData, layers: Layers) {
-    ogre_data["ogre"].forEach((pokemon) => {
-      let name = pokemon.name;
+  function show_ogre(ogre_data: [Trainer], layers: Layers) {
+    ogre_data.forEach((trainer) => {
+      let name = trainer.name;
       let icon = L.divIcon({
         className: `icon-trainer icon-鬼面组`,
         iconSize: [24, 24],
       });
-      let crs_coord = convert_coord(pokemon.x, pokemon.y);
+      let crs_coord = convert_coord(trainer.x, trainer.y);
       let marker = L.marker(crs_coord, {
         icon: icon,
       }).addTo(layers["ogre"]);
-      marker.bindPopup(`<a href="/wiki/北上鬼面组">${name}</a>`);
+      marker.bindPopup(`<a href="/wiki/北上鬼面组#${name}">${name}</a>`);
+    });
+  }
+
+  function show_trainer(
+    trainer_data: [Trainer],
+    layers: Layers,
+    link: string = ""
+  ) {
+    trainer_data.forEach((trainer) => {
+      let name = trainer.name;
+      let icon = L.divIcon({
+        className: `icon-trainer icon-${name}`,
+        iconSize: [24, 24],
+      });
+      let crs_coord = convert_coord(trainer.x, trainer.y);
+      let marker = L.marker(crs_coord, {
+        icon: icon,
+      }).addTo(layers["trainer"]);
+      marker.bindPopup(
+        `<a href="/wiki/${link ? link + "#" + name : name}">${name}</a>`
+      );
     });
   }
 
@@ -428,13 +464,14 @@ $(function () {
       layers["roads"] = L.featureGroup();
       load_data("stake", layers, map, show_stake);
       layers["legendary"] = L.featureGroup();
-      load_data("legendary", layers, map, show_legendary);
+      load_data("points", layers, map, show_paldea);
     } else if (map_id == "kitakami") {
       layers["ogre"] = L.featureGroup();
-      load_data("legendary_k", layers, map, show_ogre);
+      load_data("points_k", layers, map, show_kitakami);
     } else if (map_id == "blueberry") {
       layers["legendary"] = L.featureGroup();
-      load_data("legendary_b", layers, map, show_legendary);
+      layers["trainer"] = L.featureGroup();
+      load_data("points_b", layers, map, show_blueberry);
     }
     if (
       mw.config.get("wgCategories").includes("区域") ||
